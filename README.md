@@ -1,11 +1,13 @@
-# WebSpec (v0.1)
+# WebSpec (v0.2)
 
 WebSpec is a web-development–scoped **agent language** that compiles a human-readable spec into a deterministic execution plan.
-It is designed to reduce **logic drift** in LLM agents by enforcing:
+It is designed to keep AI agents **on track** by enforcing:
 
-- **Target stack presets** (compile backends) — no silent framework switching
-- **Strict effect policies** — file globs + command allowlists
+- **Intent + invariants** with explicit step claims (no orphan actions)
+- **Strict effect policies** — file globs + command allowlists + spec-defined write scopes
 - **Proof obligations** — steps must include checkable `ensure` rules
+- **Documentation drift checks** — docs are treated as verifiable artifacts
+- **Decision logs** — assumptions must be verified and backed by formal decisions
 - **Hard stop behavior** — if compile fails, no plan is produced; runtime refuses to execute
 
 ## Repo structure
@@ -44,6 +46,14 @@ Try a bad spec to see the compiler stop:
 ```bash
 pnpm webspec compile examples/bad.webspec.yaml
 ```
+
+## Guardrails that keep agents on track
+
+- **Assumptions must be verified** (`assumptions[].status: verified`).
+- **Decisions are formal records** (`decisions[]`) and must be final if referenced.
+- **Every step with actions must claim intent invariants** (`steps[].claims`).
+- **All invariants must be claimed** by at least one step.
+- **Docs can be gated** with strict or fuzzy checks (`docs.sections.mustContain*`).
 
 ## Studio
 

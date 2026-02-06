@@ -32,7 +32,11 @@ export type WebSpecEnsure =
   | { contains: { path: string; text: string } }
   | { routeExists: string }
   | { cmdOk: string }
-  | { trackedOnly: { glob: string; allow: string[] } };
+  | { trackedOnly: { glob: string; allow: string[] } }
+  | { docSection: { path: string; heading: string } }
+  | { docContains: { path: string; text: string } }
+  | { docContainsFuzzy: { path: string; text: string; threshold?: number; gate?: boolean } }
+  | { artifactExists: { path: string } };
 
 export type WebSpecAction =
   | { run: string }
@@ -44,11 +48,54 @@ export type WebSpecAction =
 export type WebSpecStep = {
   id: string;
   requires?: string[];
+  claims?: string[];
+  decisions?: string[];
   actions: WebSpecAction[];
   ensures: WebSpecEnsure[];
 };
 
-export type WebSpec = {
+export type WebSpecIntentInvariant = { id: string; text: string };
+export type WebSpecIntentNonGoal = { id: string; text: string };
+export type WebSpecIntent = {
+  summary: string;
+  invariants?: WebSpecIntentInvariant[];
+  nonGoals?: WebSpecIntentNonGoal[];
+};
+
+export type WebSpecAssumption = { id: string; text: string; status: "verified" | "unverified" };
+
+export type WebSpecDecision = {
+  id: string;
+  question: string;
+  answer: string;
+  rationale: string;
+  status: "provisional" | "final";
+  confidence: number; // 0..1
+  evidence?: string[];
+};
+
+export type WebSpecDocsSection = {
+  file: string;
+  heading: string;
+  mustContain?: string[];
+  mustContainFuzzy?: Array<{ text: string; threshold?: number; gate?: boolean }>;
+};
+
+export type WebSpecDocs = {
+  requiredFiles?: string[];
+  sections?: WebSpecDocsSection[];
+};
+
+export type WebSpecEffects = {
+  writeScopes?: string[];
+  expansionPolicy?: "explicit" | "inherit";
+};
+
+export type WebSpecArtifacts = {
+  required?: Array<{ path: string; role?: string; mustWrite?: boolean }>;
+};
+
+export type WebSpecV1 = {
   lang: "webspec/v0.1";
   target: WebSpecTargetId;
   project: WebSpecProject;
@@ -58,6 +105,25 @@ export type WebSpec = {
   steps?: WebSpecStep[];
   quality?: { gates: string[] };
 };
+
+export type WebSpecV2 = {
+  lang: "webspec/v0.2";
+  target: WebSpecTargetId;
+  project: WebSpecProject;
+  workspace?: WebSpecWorkspace;
+  ui?: WebSpecUI;
+  routes?: WebSpecRoute[];
+  intent?: WebSpecIntent;
+  docs?: WebSpecDocs;
+  effects?: WebSpecEffects;
+  artifacts?: WebSpecArtifacts;
+  assumptions?: WebSpecAssumption[];
+  decisions?: WebSpecDecision[];
+  steps?: WebSpecStep[];
+  quality?: { gates: string[] };
+};
+
+export type WebSpec = WebSpecV1 | WebSpecV2;
 
 export type StackMacroArgType = "path" | "string" | "string[]" | "json";
 
@@ -93,13 +159,19 @@ export type PlanCheck =
   | { kind: "file.contains"; path: string; text: string }
   | { kind: "route.exists"; route: string }
   | { kind: "cmd.ok"; cmd: string }
-  | { kind: "git.trackedOnly"; glob: string; allow: string[] };
+  | { kind: "git.trackedOnly"; glob: string; allow: string[] }
+  | { kind: "doc.section"; path: string; heading: string }
+  | { kind: "doc.contains"; path: string; text: string }
+  | { kind: "doc.contains_fuzzy"; path: string; text: string; threshold: number; gate?: boolean }
+  | { kind: "artifact.exists"; path: string };
 
 export type PlanStep = {
   id: string;
   requires: string[];
   ops: PlanOp[];
   checks: PlanCheck[];
+  claims?: string[];
+  decisions?: string[];
 };
 
 export type Plan = {

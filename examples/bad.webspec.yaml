@@ -1,7 +1,22 @@
-lang: webspec/v0.1
-target: totally-unknown-target
+lang: webspec/v0.2
+target: react-vite-shadcn-tailwind4
 project:
-  name: bad
-workspace:
-  aiDir: .ai
-  keepTracked: [".ai/README.md", ".ai/.gitkeep"]
+  name: bad-example
+
+intent:
+  summary: "Example that fails on purpose"
+  invariants:
+    - id: INV-01
+      text: "No orphan actions"
+
+assumptions:
+  - id: DEC-99
+    text: "We know the build system"
+    status: unverified
+
+steps:
+  - id: orphan_step
+    actions:
+      - run: "pnpm -v"
+    ensures:
+      - cmdOk: "pnpm -v"
