@@ -74,6 +74,7 @@ const AssumptionsSchema = z.array(
 const DecisionsSchema = z.array(
   z.object({
     id: z.string().min(1),
+    parent: z.string().min(1).nullable().optional(),
     question: z.string().min(1),
     answer: z.string().min(1),
     rationale: z.string().min(1),

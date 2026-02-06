@@ -3,6 +3,7 @@ import { Command } from "commander";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { compileWebSpec } from "@webspec/compiler";
+import { buildDecisionTree } from "@webspec/shared";
 import { loadRegistryFromStacksDir } from "@webspec/registry";
 import { runPlan } from "@webspec/runtime";
 
@@ -14,10 +15,24 @@ function repoRootFromHere() {
   return process.cwd();
 }
 
+async function loadDecisionTree(decisionsDir: string) {
+  const treePath = path.join(decisionsDir, "tree.json");
+  try {
+    const raw = await fs.readFile(treePath, "utf8");
+    const json = JSON.parse(raw);
+    if (json?.nodes && json?.index) return json;
+    if (Array.isArray(json?.decisions)) return buildDecisionTree(json.decisions);
+  } catch {
+    return undefined;
+  }
+  return undefined;
+}
+
 program
   .command("compile")
   .argument("<specFile>", "Path to a .yaml WebSpec")
   .option("--stacks <dir>", "Stacks directory", "stacks")
+  .option("--decisions <dir>", "Decision tree directory", "decisions")
   .option("--out <dir>", "Output dir under .ai", ".ai/build")
   .action(async (specFile, opts) => {
     const root = repoRootFromHere();
@@ -25,8 +40,9 @@ program
     const specText = await fs.readFile(specPath, "utf8");
     const stacksDir = path.resolve(root, opts.stacks);
     const registry = await loadRegistryFromStacksDir(stacksDir);
+    const decisionsTree = await loadDecisionTree(path.resolve(root, opts.decisions));
 
-    const res = compileWebSpec({ sourceText: specText, registry });
+    const res = compileWebSpec({ sourceText: specText, registry, decisionsTree });
     const outDir = path.resolve(root, opts.out, path.basename(specFile).replace(/\W+/g, "_"));
     await fs.mkdir(outDir, { recursive: true });
 
@@ -45,6 +61,7 @@ program
   .command("run")
   .argument("<specFile>", "Path to a .yaml WebSpec")
   .option("--stacks <dir>", "Stacks directory", "stacks")
+  .option("--decisions <dir>", "Decision tree directory", "decisions")
   .option("--out <dir>", "Output dir under .ai", ".ai/build")
   .option("--workdir <dir>", "Directory where plan executes", ".ai/tmp/run")
   .action(async (specFile, opts) => {
@@ -53,8 +70,9 @@ program
     const specText = await fs.readFile(specPath, "utf8");
     const stacksDir = path.resolve(root, opts.stacks);
     const registry = await loadRegistryFromStacksDir(stacksDir);
+    const decisionsTree = await loadDecisionTree(path.resolve(root, opts.decisions));
 
-    const res = compileWebSpec({ sourceText: specText, registry });
+    const res = compileWebSpec({ sourceText: specText, registry, decisionsTree });
     if (!res.ok || !res.plan) {
       console.error("Compile failed:");
       for (const d of res.diagnostics) console.error(`${d.code}: ${d.message}`);

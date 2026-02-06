@@ -1,10 +1,11 @@
 import YAML from "yaml";
 import picomatch from "picomatch";
-import { sha256Hex, WebSpecSchema, StackManifestSchema } from "@webspec/shared";
+import { buildDecisionTree, sha256Hex, WebSpecSchema, StackManifestSchema } from "@webspec/shared";
 
 export type CompileInput = {
   sourceText: string;
   registry: Record<string, any>; // stack manifests keyed by id
+  decisionsTree?: any;
 };
 
 export type CompileOutput = {
@@ -229,8 +230,42 @@ function buildStepsFromSpec(spec: any, manifest: any, diagnostics: any[]) {
   return steps;
 }
 
-function validateAssumptionsAndDecisions(spec: any, diagnostics: any[]) {
-  const decisions = spec.decisions ?? [];
+function resolveDecisionSource(spec: any, inputTree: any, diagnostics: any[]) {
+  const inline = spec.decisions ?? [];
+  const treeNodes = inputTree?.nodes ? Object.values(inputTree.nodes) : [];
+
+  if (inputTree && inline.length > 0) {
+    for (const d of inline) {
+      if (!inputTree.nodes?.[d.id]) {
+        diagnostics.push(
+          diag(
+            "E431_DECISION_NOT_IN_TREE",
+            `Inline decision not present in decision tree: ${d.id}`,
+            "Add it to decisions/tree.json or remove from the spec."
+          )
+        );
+      }
+    }
+  }
+
+  const decisions = inline.length > 0 ? inline : treeNodes;
+  let tree;
+  if (decisions.length > 0) {
+    try {
+      tree = buildDecisionTree(decisions);
+    } catch (e: any) {
+      diagnostics.push(
+        diag(
+          "E430_DECISION_TREE_INVALID",
+          `Decision tree invalid: ${e?.message ?? String(e)}`,
+          "Fix decision parent links or duplicate ids."
+        )
+      );
+    }
+  } else if (inputTree) {
+    tree = inputTree;
+  }
+
   const decisionMap = new Map<string, any>();
   for (const d of decisions) {
     if (decisionMap.has(d.id)) {
@@ -239,6 +274,10 @@ function validateAssumptionsAndDecisions(spec: any, diagnostics: any[]) {
     decisionMap.set(d.id, d);
   }
 
+  return { decisions, decisionMap, decisionTree: tree };
+}
+
+function validateAssumptionsAndDecisions(spec: any, decisionMap: Map<string, any>, diagnostics: any[]) {
   for (const a of spec.assumptions ?? []) {
     if (a.status !== "verified") {
       diagnostics.push(
@@ -268,8 +307,6 @@ function validateAssumptionsAndDecisions(spec: any, diagnostics: any[]) {
       );
     }
   }
-
-  return decisionMap;
 }
 
 function validateClaims(spec: any, steps: any[], userStepIds: Set<string>, diagnostics: any[]) {
@@ -324,6 +361,16 @@ function validateClaims(spec: any, steps: any[], userStepIds: Set<string>, diagn
 function validateStepDecisions(steps: any[], userStepIds: Set<string>, decisionMap: Map<string, any>, diagnostics: any[]) {
   for (const step of steps) {
     if (!userStepIds.has(step.id)) continue;
+    const touches = step.ops?.length ? true : false;
+    if (touches && (!step.decisions || step.decisions.length === 0)) {
+      diagnostics.push(
+        diag(
+          "E427_STEP_NO_DECISIONS",
+          `Step "${step.id}" has actions but no decisions.`,
+          "Add decisions[] referencing formal decision records."
+        )
+      );
+    }
     for (const d of step.decisions ?? []) {
       const decision = decisionMap.get(d);
       if (!decision) {
@@ -460,7 +507,8 @@ export function compileWebSpec(input: CompileInput): CompileOutput {
     );
   }
 
-  const decisionMap = validateAssumptionsAndDecisions(spec, diagnostics);
+  const { decisions, decisionMap } = resolveDecisionSource(spec, input.decisionsTree, diagnostics);
+  validateAssumptionsAndDecisions(spec, decisionMap, diagnostics);
 
   // Build steps
   const steps: any[] = [];
@@ -468,6 +516,18 @@ export function compileWebSpec(input: CompileInput): CompileOutput {
   const keep = spec.workspace?.keepTracked ?? [`${aiDir}/README.md`, `${aiDir}/.gitkeep`];
 
   const hasCustomSteps = spec.steps && spec.steps.length > 0;
+  if (spec.lang === "webspec/v0.2" && hasCustomSteps) {
+    const anyUserActions = (spec.steps ?? []).some((s: any) => (s.actions ?? []).length > 0);
+    if (anyUserActions && decisions.length === 0) {
+      diagnostics.push(
+        diag(
+          "E414_DECISIONS_REQUIRED",
+          "v0.2 specs with actions must provide decisions (inline or via decision tree).",
+          "Add decisions[] or provide decisions/tree.json."
+        )
+      );
+    }
+  }
 
   if (hasCustomSteps) {
     steps.push(...buildStepsFromSpec(spec, manifest, diagnostics));

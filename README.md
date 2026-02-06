@@ -16,6 +16,7 @@ It is designed to keep AI agents **on track** by enforcing:
 - `packages/compiler` — YAML compiler → Plan IR
 - `packages/runtime` — executes Plan IR with strict guardrails
 - `packages/cli` — `webspec compile` and `webspec run`
+- `decisions/` — canonical decision tree store (with index)
 - `stacks/*` — supported stack presets (contracts + macros + templates)
 - `apps/studio` — React (Vite) + shadcn + Tailwind showcase
 
@@ -51,6 +52,7 @@ pnpm webspec compile examples/bad.webspec.yaml
 
 - **Assumptions must be verified** (`assumptions[].status: verified`).
 - **Decisions are formal records** (`decisions[]`) and must be final if referenced.
+- **Decision tree is canonical** (`decisions/tree.json`) and indexed for fast lookup.
 - **Every step with actions must claim intent invariants** (`steps[].claims`).
 - **All invariants must be claimed** by at least one step.
 - **Docs can be gated** with strict or fuzzy checks (`docs.sections.mustContain*`).

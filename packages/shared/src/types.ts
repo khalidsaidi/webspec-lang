@@ -66,6 +66,7 @@ export type WebSpecAssumption = { id: string; text: string; status: "verified" |
 
 export type WebSpecDecision = {
   id: string;
+  parent?: string | null;
   question: string;
   answer: string;
   rationale: string;
@@ -172,6 +173,18 @@ export type PlanStep = {
   checks: PlanCheck[];
   claims?: string[];
   decisions?: string[];
+};
+
+export type DecisionTreeIndex = {
+  roots: string[];
+  byId: Record<string, { parent: string | null; children: string[] }>;
+};
+
+export type DecisionTreeNode = WebSpecDecision & { children: string[] };
+
+export type DecisionTree = {
+  nodes: Record<string, DecisionTreeNode>;
+  index: DecisionTreeIndex;
 };
 
 export type Plan = {

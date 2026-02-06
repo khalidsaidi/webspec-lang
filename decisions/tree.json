@@ -1,0 +1,21 @@
+{
+  "nodes": {
+    "DEC-01": {
+      "id": "DEC-01",
+      "parent": null,
+      "question": "Which build tool should the Studio use?",
+      "answer": "Vite",
+      "rationale": "Fast dev server + static deploy",
+      "status": "final",
+      "confidence": 0.86,
+      "evidence": ["README.md#WebSpec (v0.2)"],
+      "children": []
+    }
+  },
+  "index": {
+    "roots": ["DEC-01"],
+    "byId": {
+      "DEC-01": { "parent": null, "children": [] }
+    }
+  }
+}
