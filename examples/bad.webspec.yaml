@@ -1,0 +1,7 @@
+lang: webspec/v0.1
+target: totally-unknown-target
+project:
+  name: bad
+workspace:
+  aiDir: .ai
+  keepTracked: [".ai/README.md", ".ai/.gitkeep"]
