@@ -1,0 +1,31 @@
+{
+  "id": "next-app-shadcn-tailwind4",
+  "presetVersion": 1,
+  "displayName": "Next.js App Router + shadcn/ui + Tailwind v4",
+  "detect": {
+    "mustExist": ["apps/web/app"],
+    "mustNotExist": ["apps/web/vite.config.ts"]
+  },
+  "effectsPolicy": {
+    "allowedWriteGlobs": ["apps/**", "packages/**", ".github/**", ".ai/**", "stacks/**", "examples/**"],
+    "deniedWriteGlobs": ["**/.env", "**/.env.*"]
+  },
+  "commands": {
+    "allowPrefixes": ["pnpm", "git", "node", "gh"],
+    "denySubstrings": ["sudo", "rm -rf", "| sh"]
+  },
+  "semantics": {
+    "routing": {
+      "kind": "nextjs_app_router",
+      "routeToFile": "apps/web/app{{ROUTE_PATH}}/page.tsx"
+    }
+  },
+  "macros": {
+    "stack.add_route": {
+      "args": { "app": "path", "path": "string", "page": "string" },
+      "expandsTo": [
+        { "kind": "writeTemplate", "path": "${app}/app{{ROUTE_DIR}}/page.tsx", "template": "next/page.tsx.tpl", "vars": { "PAGE": "${page}" } }
+      ]
+    }
+  }
+}

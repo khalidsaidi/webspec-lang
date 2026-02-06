@@ -1,0 +1,58 @@
+{
+  "id": "react-vite-shadcn-tailwind4",
+  "presetVersion": 1,
+  "displayName": "React (Vite) + shadcn/ui + Tailwind v4",
+  "detect": {
+    "mustExist": ["apps/web/package.json"],
+    "mustNotExist": ["apps/web/app"]
+  },
+  "effectsPolicy": {
+    "allowedWriteGlobs": ["apps/**", "packages/**", ".github/**", ".ai/**", "stacks/**", "examples/**"],
+    "deniedWriteGlobs": ["**/.env", "**/.env.*"]
+  },
+  "commands": {
+    "allowPrefixes": ["pnpm", "git", "node", "gh"],
+    "denySubstrings": ["sudo", "rm -rf", "| sh"]
+  },
+  "semantics": {
+    "routing": {
+      "kind": "vite_react_router",
+      "routesFile": "apps/web/src/routes.generated.tsx",
+      "pageDir": "apps/web/src/pages"
+    }
+  },
+  "macros": {
+    "stack.scaffold": {
+      "args": { "app": "path" },
+      "expandsTo": [
+        { "kind": "run", "cmd": "pnpm create vite@latest ${app} --template react-ts" },
+        { "kind": "run", "cmd": "pnpm -C ${app} install" }
+      ]
+    },
+    "stack.tailwind_v4_vite": {
+      "args": { "app": "path" },
+      "expandsTo": [
+        { "kind": "run", "cmd": "pnpm -C ${app} add tailwindcss @tailwindcss/vite" },
+        { "kind": "writeFile", "path": "${app}/src/index.css", "content": "@import \"tailwindcss\";\n" }
+      ]
+    },
+    "stack.shadcn_init": {
+      "args": { "app": "path" },
+      "expandsTo": [
+        { "kind": "run", "cmd": "pnpm -C ${app} dlx shadcn@latest init -y" }
+      ]
+    },
+    "stack.shadcn_add": {
+      "args": { "app": "path", "components": "string[]" },
+      "expandsTo": [
+        { "kind": "run", "cmd": "pnpm -C ${app} dlx shadcn@latest add ${components...}" }
+      ]
+    },
+    "stack.set_routes": {
+      "args": { "app": "path", "routes": "json" },
+      "expandsTo": [
+        { "kind": "writeTemplate", "path": "${app}/src/routes.generated.tsx", "template": "vite/routes.generated.tsx.tpl", "vars": { "ROUTES_JSON": "${routes}" } }
+      ]
+    }
+  }
+}
