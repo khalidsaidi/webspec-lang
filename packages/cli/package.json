@@ -1,0 +1,29 @@
+{
+  "name": "@webspec/cli",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "webspec": "dist/cli.js"
+  },
+  "scripts": {
+    "dev": "tsup src/cli.ts --format esm --dts --watch --out-dir dist",
+    "build": "tsup src/cli.ts --format esm --dts --out-dir dist",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "format": "prettier -w ."
+  },
+  "dependencies": {
+    "@webspec/shared": "workspace:*",
+    "@webspec/registry": "workspace:*",
+    "@webspec/compiler": "workspace:*",
+    "@webspec/runtime": "workspace:*",
+    "commander": "^12.0.0",
+    "execa": "^9.0.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.0"
+  }
+}

@@ -8,3 +8,14 @@
 .env
 .env.*
 !.env.example
+
+# Dependencies and caches
+node_modules/
+.turbo/
+
+# Build outputs
+**/dist/**
+**/build/**
+
+# Editor/IDE
+.cursor/
