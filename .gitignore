@@ -1,0 +1,10 @@
+
+# Agent workspace (keep README + .gitkeep only)
+.ai/*
+!.ai/README.md
+!.ai/.gitkeep
+
+# Do not commit env secrets
+.env
+.env.*
+!.env.example
